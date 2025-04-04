@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ハムスター年齢計算機</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f3e8;
+            color: #5a4b41;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 500px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #e07a5f;
+            margin-bottom: 20px;
+        }
+        
+        .hamster-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+        
+        .result {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #3d405b;
+        }
+        
+        .input-section {
+            margin: 25px 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        input[type="date"] {
+            padding: 12px;
+            border: 2px solid #e07a5f;
+            border-radius: 8px;
+            font-size: 16px;
+            width: 80%;
+            max-width: 300px;
+            margin-bottom: 15px;
+        }
+        
+        .species-selection {
+            margin: 20px 0;
+            text-align: left;
+            width: 80%;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .radio-option {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .radio-option input {
+            margin-right: 10px;
+        }
+        
+        .radio-option label {
+            display: inline;
+            font-weight: normal;
+        }
+        
+        button {
+            background-color: #e07a5f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #d06a4f;
+        }
+        
+        .info-text {
+            font-size: 14px;
+            color: #777;
+            margin-top: 20px;
+        }
+        
+        .reset-button {
+            background-color: #999;
+            margin-top: 20px;
+            font-size: 14px;
+            padding: 8px 15px;
+        }
+        
+        .conversion-info {
+            font-size: 14px;
+            font-style: italic;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .species-display {
+            font-weight: bold;
+            color: #e07a5f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ハムスター年齢計算機</h1>
+        <div class="hamster-icon">??</div>
+        
+        <div id="result-section" style="display:none">
+            <p>あなたの<span id="species-display" class="species-display">ハムスター</span>は</p>
+            <div id="hamster-age" class="result"></div>
+            <p>人間に換算すると</p>
+            <div id="human-age" class="result"></div>
+            <button id="reset-button" class="reset-button">初期化する</button>
+        </div>
+        
+        <div id="input-section" class="input-section">
+            <label for="birthday">ハムスターの誕生日を入力してください</label>
+            <input type="date" id="birthday" required>
+            
+            <div class="species-selection">
+                <label>ハムスターの種類を選択してください</label>
+                
+                <div class="radio-option">
+                    <input type="radio" id="golden" name="species" value="golden" checked>
+                    <label for="golden">ゴールデンハムスター</label>
+                </div>
+                <div class="conversion-info">（1ヶ月 = 人間の約14歳、最大寿命3年）</div>
+                
+                <div class="radio-option">
+                    <input type="radio" id="djungarian" name="species" value="djungarian">
+                    <label for="djungarian">ジャンガリアンハムスター</label>
+                </div>
+                <div class="conversion-info">（1ヶ月 = 人間の約12歳、最大寿命2.5年）</div>
+                
+                <div class="radio-option">
+                    <input type="radio" id="roborovski" name="species" value="roborovski">
+                    <label for="roborovski">ロボロフスキーハムスター</label>
+                </div>
+                <div class="conversion-info">（1ヶ月 = 人間の約10歳、最大寿命3.5年）</div>
+            </div>
+            
+            <button id="calculate-button">計算する</button>
+        </div>
+        
+        <p class="info-text">※ハムスターの種類によって寿命や成長速度が異なります。それぞれの種類に適した換算比率で計算しています。</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const birthdayInput = document.getElementById('birthday');
+            const calculateButton = document.getElementById('calculate-button');
+            const resetButton = document.getElementById('reset-button');
+            const resultSection = document.getElementById('result-section');
+            const inputSection = document.getElementById('input-section');
+            const hamsterAgeDisplay = document.getElementById('hamster-age');
+            const humanAgeDisplay = document.getElementById('human-age');
+            const speciesDisplay = document.getElementById('species-display');
+            
+            // 換算率の定義（月齢に対する人間年齢の比率）
+            const conversionRates = {
+                golden: 14,      // ゴールデン: 1ヶ月 = 人間の14歳
+                djungarian: 12,  // ジャンガリアン: 1ヶ月 = 人間の12歳
+                roborovski: 10   // ロボロフスキー: 1ヶ月 = 人間の10歳
+            };
+            
+            // 種類の日本語名
+            const speciesNames = {
+                golden: "ゴールデンハムスター",
+                djungarian: "ジャンガリアンハムスター",
+                roborovski: "ロボロフスキーハムスター"
+            };
+            
+            // 今日の日付をデフォルトの最大値として設定
+            const today = new Date();
+            const dateString = today.toISOString().split('T')[0];
+            birthdayInput.setAttribute('max', dateString);
+            
+            // 保存されたデータがあれば読み込む
+            const savedBirthday = localStorage.getItem('hamsterBirthday');
+            const savedSpecies = localStorage.getItem('hamsterSpecies') || 'golden';
+            
+            // 保存された種類に応じてラジオボタンを選択
+            if (savedSpecies) {
+                const speciesInput = document.querySelector(`input[value="${savedSpecies}"]`);
+                if (speciesInput) {
+                    speciesInput.checked = true;
+                } else {
+                    // 旧データの互換性対応
+                    document.getElementById('golden').checked = true;
+                }
+            }
+            
+            if (savedBirthday) {
+                calculateAndDisplayAge(savedBirthday, savedSpecies);
+                resultSection.style.display = 'block';
+                inputSection.style.display = 'none';
+            }
+            
+            calculateButton.addEventListener('click', function() {
+                const birthday = birthdayInput.value;
+                const species = document.querySelector('input[name="species"]:checked').value;
+                
+                if (birthday) {
+                    // データを保存
+                    localStorage.setItem('hamsterBirthday', birthday);
+                    localStorage.setItem('hamsterSpecies', species);
+                    
+                    calculateAndDisplayAge(birthday, species);
+                    
+                    // 入力フォームを隠して結果を表示
+                    resultSection.style.display = 'block';
+                    inputSection.style.display = 'none';
+                } else {
+                    alert('誕生日を入力してください');
+                }
+            });
+            
+            resetButton.addEventListener('click', function() {
+                // 保存データを削除
+                localStorage.removeItem('hamsterBirthday');
+                localStorage.removeItem('hamsterSpecies');
+                
+                // 入力フォームをリセットして表示
+                birthdayInput.value = '';
+                document.getElementById('golden').checked = true;
+                resultSection.style.display = 'none';
+                inputSection.style.display = 'block';
+            });
+            
+            function calculateAndDisplayAge(birthdayStr, species) {
+                const birthday = new Date(birthdayStr);
+                const today = new Date();
+                
+                // ハムスターの月齢と年齢を計算
+                const ageInMilliseconds = today - birthday;
+                const ageInDays = ageInMilliseconds / (1000 * 60 * 60 * 24);
+                const ageInMonths = ageInDays / 30.44; // 平均月日数で割る
+                const ageInYears = ageInDays / 365.25;
+                
+                // 資料に基づいた年齢マッピングテーブル
+                const ageMapping = {
+                      'golden': [
+    { hamsterMonths: 0.3, humanAge: 1 },
+    { hamsterMonths: 0.6, humanAge: 3 },
+    { hamsterMonths: 1, humanAge: 12 },
+    { hamsterMonths: 1.5, humanAge: 13 },
+    { hamsterMonths: 2, humanAge: 14 },
+    { hamsterMonths: 3, humanAge: 16 },
+    { hamsterMonths: 4, humanAge: 18 },
+    { hamsterMonths: 6, humanAge: 22 },
+    { hamsterMonths: 9, humanAge: 27 },
+    { hamsterMonths: 12, humanAge: 33 },
+    { hamsterMonths: 15, humanAge: 38 },
+    { hamsterMonths: 18, humanAge: 44 },
+    { hamsterMonths: 21, humanAge: 49 },
+    { hamsterMonths: 24, humanAge: 55 },
+    { hamsterMonths: 27, humanAge: 60 },
+    { hamsterMonths: 30, humanAge: 66 },
+    { hamsterMonths: 33, humanAge: 71 },
+    { hamsterMonths: 36, humanAge: 77 },
+    { hamsterMonths: 39, humanAge: 82 },
+    { hamsterMonths: 42, humanAge: 88 }
+  ],
+  'djungarian': [
+    { hamsterMonths: 0.3, humanAge: 1 },
+    { hamsterMonths: 0.6, humanAge: 4 },
+    { hamsterMonths: 1, humanAge: 14 },
+    { hamsterMonths: 1.5, humanAge: 15 },
+    { hamsterMonths: 2, humanAge: 16 },
+    { hamsterMonths: 3, humanAge: 19 },
+    { hamsterMonths: 4, humanAge: 21 },
+    { hamsterMonths: 6, humanAge: 26 },
+    { hamsterMonths: 9, humanAge: 34 },
+    { hamsterMonths: 12, humanAge: 41 },
+    { hamsterMonths: 15, humanAge: 49 },
+    { hamsterMonths: 18, humanAge: 56 },
+    { hamsterMonths: 21, humanAge: 64 },
+    { hamsterMonths: 24, humanAge: 71 },
+    { hamsterMonths: 27, humanAge: 79 },
+    { hamsterMonths: 30, humanAge: 86 },
+    { hamsterMonths: 33, humanAge: 94 },
+    { hamsterMonths: 36, humanAge: 101 },
+    { hamsterMonths: 39, humanAge: 109 },
+    { hamsterMonths: 42, humanAge: 116 }
+  ],
+  'roborovski': [
+    { hamsterMonths: 0.3, humanAge: 1 },
+    { hamsterMonths: 0.6, humanAge: 4 },
+    { hamsterMonths: 1, humanAge: 13 },
+    { hamsterMonths: 1.5, humanAge: 14 },
+    { hamsterMonths: 2, humanAge: 15 },
+    { hamsterMonths: 3, humanAge: 18 },
+    { hamsterMonths: 4, humanAge: 20 },
+    { hamsterMonths: 6, humanAge: 24 },
+    { hamsterMonths: 9, humanAge: 31 },
+    { hamsterMonths: 12, humanAge: 37 },
+    { hamsterMonths: 15, humanAge: 44 },
+    { hamsterMonths: 18, humanAge: 50 },
+    { hamsterMonths: 21, humanAge: 56 },
+    { hamsterMonths: 24, humanAge: 63 },
+    { hamsterMonths: 27, humanAge: 70 },
+    { hamsterMonths: 30, humanAge: 76 },
+    { hamsterMonths: 33, humanAge: 82 },
+    { hamsterMonths: 36, humanAge: 89 },
+    { hamsterMonths: 39, humanAge: 96 },
+    { hamsterMonths: 42, humanAge: 102 }
+  ]
+                };
+                
+                // 線形補間で人間年齢を計算
+                function interpolateAge(hamsterMonths, speciesType) {
+                    const points = ageMapping[speciesType];
+                    
+                    // 月齢が最大値を超える場合は最大値を返す
+                    if (hamsterMonths >= points[points.length - 1].hamsterMonths) {
+                        return points[points.length - 1].humanAge;
+                    }
+                    
+                    // 適切な区間を見つける
+                    for (let i = 0; i < points.length - 1; i++) {
+                        if (hamsterMonths >= points[i].hamsterMonths && 
+                            hamsterMonths <= points[i + 1].hamsterMonths) {
+                            
+                            // 線形補間計算
+                            const ratio = (hamsterMonths - points[i].hamsterMonths) / 
+                                        (points[i + 1].hamsterMonths - points[i].hamsterMonths);
+                            
+                            return points[i].humanAge + 
+                                    ratio * (points[i + 1].humanAge - points[i].humanAge);
+                        }
+                    }
+                    
+                    return 0; // 該当しない場合（通常はここには到達しない）
+                }
+                
+                const humanEquivalentAge = interpolateAge(ageInMonths, species);
+                
+                // 種類名を表示
+                speciesDisplay.textContent = speciesNames[species];
+                
+                // 年齢表示を更新
+                hamsterAgeDisplay.textContent = ageInYears < 1 
+                    ? `${Math.round(ageInMonths * 10) / 10}ヶ月` 
+                    : `${Math.round(ageInYears * 10) / 10}歳`;
+                
+                humanAgeDisplay.textContent = `${Math.round(humanEquivalentAge * 10) / 10}歳`;
+            }
+        });
+    </script>
+</body>
+</html>
